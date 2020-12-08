@@ -16,14 +16,11 @@
 #include <string.h>
 #include <cuda.h>
 
-//define the error threshold for the results "not matching"
-#define PERCENT_DIFF_ERROR_THRESHOLD 0.05
-
-#define GPU_DEVICE 0
+#define NUM_ITERATIONS 10
 
 /* Problem size */
-#define NI 8192l
-#define NJ 8192l
+#define NI 12500l
+#define NJ 12500l
 
 /* Thread block dimensions */
 #define DIM_THREAD_BLOCK_X 32
@@ -83,6 +80,7 @@ int main(int argc, char *argv[])
 	DATA_TYPE* A;
 	DATA_TYPE* B;  
 
+	float average_time = 0;
 
 	cudaEvent_t start, end;
 	float time;
@@ -93,9 +91,19 @@ int main(int argc, char *argv[])
 	cudaMallocManaged( &B, NI*NJ*sizeof(DATA_TYPE) );
 	//initialize the arrays
 	init(A);
-	cudaEventRecord(start);
-	convolution2DCuda(A, B);
-	cudaEventRecord(end);
+	for (int i = 0; i < NUM_ITERATIONS + 1; ++i) {
+		cudaEventCreate(&start);
+		cudaEventCreate(&end);
+		cudaEventRecord(start);
+		convolution2DCuda(A, B);
+		cudaEventRecord(end);
+		cudaEventSynchronize(end);
+		cudaEventElapsedTime(&time, start, end);
+		if (i > 0) {
+			// first iteration warms up the GPU
+			average_time += time / NUM_ITERATIONS;
+		}
+	}
 #else
 	DATA_TYPE *gA, *gB;
 	cudaMalloc( &gA, NI*NJ*sizeof(DATA_TYPE) );
@@ -105,25 +113,23 @@ int main(int argc, char *argv[])
 	//initialize the arrays
 	init(A);
 	cudaMemcpy(gA, A, NI*NJ*sizeof(DATA_TYPE), cudaMemcpyHostToDevice);
-	cudaEventRecord(start);
-	convolution2DCuda(gA, gB);
-	cudaEventRecord(end);
+
+	for (int i = 0; i < NUM_ITERATIONS + 1; ++i) {
+		cudaEventCreate(&start);
+		cudaEventCreate(&end);
+		cudaEventRecord(start);
+		convolution2DCuda(gA, gB);
+		cudaEventRecord(end);
+		cudaEventSynchronize(end);
+		cudaEventElapsedTime(&time, start, end);
+		if (i > 0) {
+			// first iteration warms up the GPU
+			average_time += time / NUM_ITERATIONS;
+		}
+	}
 	cudaMemcpy(B, gB, NI*NJ*sizeof(DATA_TYPE), cudaMemcpyDeviceToHost);
 #endif
-
-	cudaEventSynchronize(end);
-	cudaEventElapsedTime(&time, start, end);
-	printf("%f\n", time);
-	FILE *fp;
-
-	fp = fopen("result_2DConv.txt","a+");
-
-	for(long i = 0; i < NI*NJ; i+= 10000) {
-		fprintf(fp, "%lf\n", B[i]);
-	}
-	
-	fclose(fp);
-
+	printf("%f\n", average_time);
 #ifndef UNMANAGED
 	cudaFree(A);
 	cudaFree(B);
