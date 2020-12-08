@@ -7,10 +7,12 @@
 
 __global__ void add_kern(float *x)
 {
+  int current = 0;
   for (int i = 0; i < 9; i++) { 
-    x[i] += (int)(1024*pow(2.0,(i+2)));
+    for (; current < (int)(1024 * (1<<(i+2))); current+=(int)(1024 * (1<<(i+2)))){
+      x[i] += (int)(1024*pow(2.0,(i+2)));
+    }
   }
-
 }
 
 int main(void)
@@ -19,12 +21,12 @@ int main(void)
   float *x;
 
 	cudaMallocManaged( &x, N*sizeof(float) );
-  add_kern<<<10,10>>>(x);
+  add_kern<<<1,1>>>(x);
 
-  
   printf("x: %f\n", x[0]);
   // Free memory
   cudaFree(x);
 
   return 0;
 }
+
