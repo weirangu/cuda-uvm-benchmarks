@@ -17,5 +17,8 @@ transfer: transferBandwidth.cu
 3mm: 3mm.cu
 		nvcc -g -Wno-deprecated-gpu-targets 3mm.cu -lcudart -o 3mm
 
+atax: atax.cu
+		nvcc -g -Wno-deprecated-gpu-targets atax.cu -lcudart -o atax
+
 clean:
 	rm -rf $(EXES) *-unmanaged transferManaged transfer
