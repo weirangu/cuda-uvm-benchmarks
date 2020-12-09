@@ -1,6 +1,6 @@
 #!/usr/bin/make
 
-EXES = 2DConvolution 2mm 3DConvolution
+EXES = 2DConvolution 2mm 3DConvolution reduction
 
 all: $(EXES) transferManaged transfer
 
