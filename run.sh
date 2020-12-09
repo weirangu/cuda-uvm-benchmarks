@@ -11,12 +11,10 @@ make clean
 make
 
 run10 ./2dconv "2D Convolution Managed"
+run10 ./2dconv-unmanaged "2D Convolution Unmanaged"
+
 run10 ./2mm "2mm Managed"
+run10 ./2mm-unmanaged "2mm Unmanaged"
+
 run10 ./3dconv "3D Convolution Managed"
-
-make unmanaged
-
-run10 ./2dconv "2D Convolution Unmanaged"
-run10 ./2mm "2mm Unmanaged"
-run10 ./3dconv "3D Convolution Unmanaged"
-
+run10 ./3dconv-unmanaged "3D Convolution Unmanaged"
