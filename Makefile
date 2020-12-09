@@ -1,10 +1,12 @@
 #!/usr/bin/make
 
-managed: 2DConvolution.cu
-	nvcc -Wno-deprecated-gpu-targets 2DConvolution.cu -lcudart -o 2dconv
+EXES = 2DConvolution 2mm 3DConvolution
 
-unmanaged: 2DConvolution.cu
-	nvcc -Wno-deprecated-gpu-targets -DUNMANAGED 2DConvolution.cu -lcudart -o 2dconv
+all: $(EXES)
+
+%:  %.cu
+	nvcc -g -Wno-deprecated-gpu-targets $^ -lcudart -o $@
+	nvcc -g -Wno-deprecated-gpu-targets -DUNMANAGED $^ -lcudart -o $@-unmanaged
 
 clean:
-	rm -rf 2dconv *.txt
+	rm -rf $(EXES) *-unmanaged

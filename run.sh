@@ -1,15 +1,22 @@
 #!/bin/bash
 
+function run10() {
+	echo $2
+	for i in {1..10}; do
+		$1
+	done
+}
+
 make clean
 make
-echo "2D Convolution Managed"
-for i in {1..10}; do
-	./2dconv
-done
+
+run10 ./2dconv "2D Convolution Managed"
+run10 ./2mm "2mm Managed"
+run10 ./3dconv "3D Convolution Managed"
 
 make unmanaged
-echo "2D Convolution Unmanaged"
-for i in {1..10}; do
-	./2dconv
-done
+
+run10 ./2dconv "2D Convolution Unmanaged"
+run10 ./2mm "2mm Unmanaged"
+run10 ./3dconv "3D Convolution Unmanaged"
 

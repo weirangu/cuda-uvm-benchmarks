@@ -19,8 +19,8 @@
 #define NUM_ITERATIONS 10
 
 /* Problem size */
-#define NI 12500l
-#define NJ 12500l
+#define NI 15000l
+#define NJ 15000l
 
 /* Thread block dimensions */
 #define DIM_THREAD_BLOCK_X 32
@@ -84,8 +84,6 @@ int main(int argc, char *argv[])
 
 	cudaEvent_t start, end;
 	float time;
-	cudaEventCreate(&start);
-	cudaEventCreate(&end);
 #ifndef UNMANAGED
 	cudaMallocManaged( &A, NI*NJ*sizeof(DATA_TYPE) );
 	cudaMallocManaged( &B, NI*NJ*sizeof(DATA_TYPE) );
