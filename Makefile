@@ -13,5 +13,9 @@ transferManaged: transferBandwidthManaged.cu
 
 transfer: transferBandwidth.cu
 		nvcc -g -Wno-deprecated-gpu-targets transferBandwidth.cu -lcudart -o transfer
+
+3mm: 3mm.cu
+		nvcc -g -Wno-deprecated-gpu-targets 3mm.cu -lcudart -o 3mm
+
 clean:
 	rm -rf $(EXES) *-unmanaged transferManaged transfer
