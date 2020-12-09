@@ -20,5 +20,8 @@ transfer: transferBandwidth.cu
 atax: atax.cu
 		nvcc -g -Wno-deprecated-gpu-targets atax.cu -lcudart -o atax
 
+bicg: bicg.cu
+		nvcc -g -Wno-deprecated-gpu-targets bicg.cu -lcudart -o bicg
+
 clean:
 	rm -rf $(EXES) *-unmanaged transferManaged transfer
