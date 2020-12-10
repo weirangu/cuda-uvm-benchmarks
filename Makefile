@@ -26,5 +26,11 @@ atax: atax.cu
 bicg: bicg.cu
 		nvcc -g -Wno-deprecated-gpu-targets bicg.cu -lcudart -o bicg
 
+add_man: add_man.cu
+		nvcc -g -Wno-deprecated-gpu-targets add_man.cu -lcudart -o add_man
+
+add_unman: add_unman.cu
+		nvcc -g -Wno-deprecated-gpu-targets add_unman.cu -lcudart -o add_unman
+
 clean:
 	rm -rf $(EXES) *-unmanaged transferManaged transfer
