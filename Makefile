@@ -1,6 +1,6 @@
 #!/usr/bin/make
 
-EXES = 2DConvolution 2mm 3DConvolution reduction
+EXES = 2DConvolution 2mm 3DConvolution
 
 all: $(EXES) transferManaged transfer
 
@@ -16,6 +16,9 @@ transfer: transferBandwidth.cu
 
 3mm: 3mm.cu
 		nvcc -g -Wno-deprecated-gpu-targets 3mm.cu -lcudart -o 3mm
+
+3mm_man: 3mm_managed.cu
+		nvcc -g -Wno-deprecated-gpu-targets 3mm_managed.cu -lcudart -o 3mm_man
 
 atax: atax.cu
 		nvcc -g -Wno-deprecated-gpu-targets atax.cu -lcudart -o atax

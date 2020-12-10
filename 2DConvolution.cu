@@ -19,8 +19,8 @@
 #define NUM_ITERATIONS 10
 
 /* Problem size */
-#define NI 15000l
-#define NJ 15000l
+//#define NI 15000l
+//#define NJ 15000l
 
 /* Thread block dimensions */
 #define DIM_THREAD_BLOCK_X 32
@@ -29,7 +29,7 @@
 /* Can switch DATA_TYPE between float and double */
 typedef double DATA_TYPE;
 
-void init(DATA_TYPE* A)
+void init(DATA_TYPE* A, int NI, int NJ)
 {
 	int i, j;
 
@@ -42,7 +42,7 @@ void init(DATA_TYPE* A)
     	}
 }
 
-__global__ void Convolution2D_kernel(DATA_TYPE *A, DATA_TYPE *B)
+__global__ void Convolution2D_kernel(DATA_TYPE *A, DATA_TYPE *B, int NI, int NJ)
 {
 	int j = blockIdx.x * blockDim.x + threadIdx.x;
 	int i = blockIdx.y * blockDim.y + threadIdx.y;
@@ -62,12 +62,12 @@ __global__ void Convolution2D_kernel(DATA_TYPE *A, DATA_TYPE *B)
 }
 
 
-void convolution2DCuda(DATA_TYPE* A, DATA_TYPE* B)
+void convolution2DCuda(DATA_TYPE* A, DATA_TYPE* B, int NI, int NJ)
 {
 	dim3 block(DIM_THREAD_BLOCK_X, DIM_THREAD_BLOCK_Y);
 	dim3 grid((size_t)ceil( ((float)NI) / ((float)block.x) ), (size_t)ceil( ((float)NJ) / ((float)block.y)) );
 	
-	Convolution2D_kernel<<<grid, block>>>(A, B);
+	Convolution2D_kernel<<<grid, block>>>(A, B, NI, NJ);
 
 	// Wait for GPU to finish before accessing on host
 	// mock synchronization of memory specific to stream
@@ -77,6 +77,16 @@ void convolution2DCuda(DATA_TYPE* A, DATA_TYPE* B)
 
 int main(int argc, char *argv[])
 {
+
+  if(argc < 2){
+    printf("pls no troll\n");
+    return 1;
+  }
+
+  int NI = atoi(argv[1]);
+  int NJ = atoi(argv[1]);
+
+
 	DATA_TYPE* A;
 	DATA_TYPE* B;  
 
@@ -88,12 +98,12 @@ int main(int argc, char *argv[])
 	cudaMallocManaged( &A, NI*NJ*sizeof(DATA_TYPE) );
 	cudaMallocManaged( &B, NI*NJ*sizeof(DATA_TYPE) );
 	//initialize the arrays
-	init(A);
+	init(A, NI, NJ);
 	for (int i = 0; i < NUM_ITERATIONS + 1; ++i) {
 		cudaEventCreate(&start);
 		cudaEventCreate(&end);
 		cudaEventRecord(start);
-		convolution2DCuda(A, B);
+		convolution2DCuda(A, B, NI, NJ);
 		cudaEventRecord(end);
 		cudaEventSynchronize(end);
 		cudaEventElapsedTime(&time, start, end);
@@ -109,14 +119,14 @@ int main(int argc, char *argv[])
 	A = (DATA_TYPE *) malloc( NI*NJ*sizeof(DATA_TYPE) );
 	B = (DATA_TYPE *) malloc( NI*NJ*sizeof(DATA_TYPE) );
 	//initialize the arrays
-	init(A);
+	init(A, NI, NJ);
 	cudaMemcpy(gA, A, NI*NJ*sizeof(DATA_TYPE), cudaMemcpyHostToDevice);
 
 	for (int i = 0; i < NUM_ITERATIONS + 1; ++i) {
 		cudaEventCreate(&start);
 		cudaEventCreate(&end);
 		cudaEventRecord(start);
-		convolution2DCuda(gA, gB);
+		convolution2DCuda(gA, gB, NI, NJ);
 		cudaEventRecord(end);
 		cudaEventSynchronize(end);
 		cudaEventElapsedTime(&time, start, end);
