@@ -26,7 +26,7 @@ def create_plot(test_names, title, xlabel, ylabel, filename):
                 managed = mean(map(float, lines))
                 unmanaged = mean(map(float, lines_unmanaged))
                 y.append(1)
-                yunmanaged.append(managed / unmanaged)
+                yunmanaged.append(unmanaged / managed)
 
                 xticks.append(i + width/2)
 
