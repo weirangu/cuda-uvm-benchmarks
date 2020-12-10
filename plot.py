@@ -3,7 +3,7 @@ from sys import argv
 import matplotlib.pyplot as plt
 from argparse import ArgumentParser
 
-colours = ['r', 'g', 'b']
+sizes = ['100', '512', '1024', '1536', '2048', '4096']
 width = 0.2
 
 def create_plot(test_names, title, xlabel, ylabel, filename):
@@ -38,7 +38,34 @@ def create_plot(test_names, title, xlabel, ylabel, filename):
     plt.savefig(filename)
     plt.close()
 
-if len(argv) < 6:
-    print("Pass in name of plot, xlabel, ylabel, output file, and tests to add to the graph")
+def create_line_plot(test_name, title, xlabel, ylabel, filename):
+    y = []
+    yunmanaged = []
+    test_file = f"{test_name}.txt"
+    test_file_unmanaged = f"{test_name}-unmanaged.txt"
+    with open(test_file) as f:
+        with open(test_file_unmanaged) as uf:
+            lines = f.readlines()
+            lines_unmanaged = uf.readlines()
+
+            y.extend(map(float, lines))
+            yunmanaged.extend(map(float, lines_unmanaged))
+    
+    plt.plot(sizes, y, 'r', label='With UVM')
+    plt.plot(sizes, yunmanaged, 'b', label='Without UVM')
+
+    plt.title(title)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.legend()
+    plt.savefig(filename)
+    plt.close()
+
+if len(argv) < 7:
+    print("Pass in 'line'/'bar', name of plot, xlabel, ylabel, output file, and tests to add to the graph. Only provide one test if using line.")
     exit(0)
-create_plot(argv[5:], argv[1], argv[2], argv[3], argv[4])
+
+if argv[1] == 'bar':
+    create_plot(argv[6:], argv[2], argv[3], argv[4], argv[5])
+else:
+    create_line_plot(argv[6], argv[2], argv[3], argv[4], argv[5])
