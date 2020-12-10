@@ -3,11 +3,13 @@ from subprocess import Popen, PIPE
 
 sizes = [100, 512, 1024, 1536, 2048, 4096]
 
-for sz in sizes:
-  Popen("./3mm_man %i >> 3mm_managed.txt"%(sz), shell=True)
-  Popen("./3mm %i >> 3mm.txt"%(sz), shell=True)
-  Popen("./2DConvolution %i >> 2DConvo.txt"%(sz), shell=True)
-  Popen("./2DConvolution-unmanaged %i >> 2DConvo_unman.txt"%(sz), shell=True)
+#for sz in sizes:
+
+for i in range(5):
+  Popen("./3mm_man 1024 >> 3mm.txt", shell=True)
+  Popen("./3mm 1024 >> 3mm-unmanaged.txt", shell=True)
+  Popen("./2DConvolution 1024 >> 2DConvolution.txt", shell=True)
+  Popen("./2DConvolution-unmanaged 1024 >> 2DConvolution-unmanaged.txt", shell=True)
 
   
 

@@ -1,7 +1,7 @@
 rm 3mm.txt
-rm 3mm_managed.txt
-rm 2DConvo.txt
-rm 2DConvo_unman.txt
+rm 3mm-unmanaged.txt
+rm 2DConvolution.txt
+rm 2DConvolution-unmanaged.txt
 
 rm 3mm
 rm 3mm_man
