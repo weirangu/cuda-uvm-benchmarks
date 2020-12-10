@@ -184,36 +184,40 @@ void mm3Cuda(DATA_TYPE* A, DATA_TYPE* B, DATA_TYPE* C, DATA_TYPE* D, DATA_TYPE* 
 	cudaMalloc((void **)&F_gpu, sizeof(DATA_TYPE) * NJ * NL);
 	cudaMalloc((void **)&G_gpu, sizeof(DATA_TYPE) * NI * NL);
 
-	cudaEventCreate(&start);
-	cudaEventCreate(&end);
-	cudaEventRecord(start);
+  //for(int i = 0; i < 5; i++){
 
-	cudaMemcpy(A_gpu, A, sizeof(DATA_TYPE) * NI * NK, cudaMemcpyHostToDevice);
-	cudaMemcpy(B_gpu, B, sizeof(DATA_TYPE) * NK * NJ, cudaMemcpyHostToDevice);
-	cudaMemcpy(C_gpu, C, sizeof(DATA_TYPE) * NJ * NM, cudaMemcpyHostToDevice);
-	cudaMemcpy(D_gpu, D, sizeof(DATA_TYPE) * NM * NL, cudaMemcpyHostToDevice);
-	cudaMemcpy(E_gpu, E, sizeof(DATA_TYPE) * NI * NJ, cudaMemcpyHostToDevice);
-	cudaMemcpy(F_gpu, F, sizeof(DATA_TYPE) * NJ * NL, cudaMemcpyHostToDevice);
-	cudaMemcpy(G_gpu, G, sizeof(DATA_TYPE) * NI * NL, cudaMemcpyHostToDevice);	
-	
-	dim3 block(DIM_THREAD_BLOCK_X, DIM_THREAD_BLOCK_Y);
-	dim3 grid1((size_t)(ceil( ((float)NJ) / ((float)DIM_THREAD_BLOCK_X) )),(size_t)(ceil((float)NI/ ((float)DIM_THREAD_BLOCK_Y) )));
-	dim3 grid2((size_t)(ceil( ((float)NL) / ((float)DIM_THREAD_BLOCK_X) )),(size_t)(ceil((float)NJ/ ((float)DIM_THREAD_BLOCK_Y) )));
-	dim3 grid3((size_t)(ceil( ((float)NL) / ((float)DIM_THREAD_BLOCK_X) )),(size_t)(ceil((float)NI/ ((float)DIM_THREAD_BLOCK_Y) )));
+    cudaMemcpy(A_gpu, A, sizeof(DATA_TYPE) * NI * NK, cudaMemcpyHostToDevice);
+    cudaMemcpy(B_gpu, B, sizeof(DATA_TYPE) * NK * NJ, cudaMemcpyHostToDevice);
+    cudaMemcpy(C_gpu, C, sizeof(DATA_TYPE) * NJ * NM, cudaMemcpyHostToDevice);
+    cudaMemcpy(D_gpu, D, sizeof(DATA_TYPE) * NM * NL, cudaMemcpyHostToDevice);
+    cudaMemcpy(E_gpu, E, sizeof(DATA_TYPE) * NI * NJ, cudaMemcpyHostToDevice);
+    cudaMemcpy(F_gpu, F, sizeof(DATA_TYPE) * NJ * NL, cudaMemcpyHostToDevice);
+    cudaMemcpy(G_gpu, G, sizeof(DATA_TYPE) * NI * NL, cudaMemcpyHostToDevice);	
+    
+    cudaEventCreate(&start);
+    cudaEventCreate(&end);
+    cudaEventRecord(start);
 
-	//t_start = rtclock();
-	mm3_kernel1<<<grid1,block>>>(A_gpu, B_gpu, E_gpu, NI, NJ, NK, NL, NM);
-  cudaDeviceSynchronize();
-	mm3_kernel2<<<grid2,block>>>(C_gpu, D_gpu, F_gpu, NI, NJ, NK, NL, NM);
-  cudaDeviceSynchronize();
-	mm3_kernel3<<<grid3,block>>>(E_gpu, F_gpu, G_gpu, NI, NJ, NK, NL, NM);
-  cudaDeviceSynchronize();
+    dim3 block(DIM_THREAD_BLOCK_X, DIM_THREAD_BLOCK_Y);
+    dim3 grid1((size_t)(ceil( ((float)NJ) / ((float)DIM_THREAD_BLOCK_X) )),(size_t)(ceil((float)NI/ ((float)DIM_THREAD_BLOCK_Y) )));
+    dim3 grid2((size_t)(ceil( ((float)NL) / ((float)DIM_THREAD_BLOCK_X) )),(size_t)(ceil((float)NJ/ ((float)DIM_THREAD_BLOCK_Y) )));
+    dim3 grid3((size_t)(ceil( ((float)NL) / ((float)DIM_THREAD_BLOCK_X) )),(size_t)(ceil((float)NI/ ((float)DIM_THREAD_BLOCK_Y) )));
 
-	cudaEventRecord(end);
-	cudaEventSynchronize(end);
-	cudaEventElapsedTime(&time, start, end);
+    //t_start = rtclock();
+    mm3_kernel1<<<grid1,block>>>(A_gpu, B_gpu, E_gpu, NI, NJ, NK, NL, NM);
+    cudaDeviceSynchronize();
+    mm3_kernel2<<<grid2,block>>>(C_gpu, D_gpu, F_gpu, NI, NJ, NK, NL, NM);
+    cudaDeviceSynchronize();
+    mm3_kernel3<<<grid3,block>>>(E_gpu, F_gpu, G_gpu, NI, NJ, NK, NL, NM);
+    cudaDeviceSynchronize();
 
-	fprintf(stdout, "%0.6lf\n", time);
+    cudaEventRecord(end);
+    cudaEventSynchronize(end);
+    cudaEventElapsedTime(&time, start, end);
+
+    fprintf(stdout, "%0.6lf\n", time);
+
+  //}
 
 	cudaMemcpy(G_outputFromGpu, G_gpu, sizeof(DATA_TYPE) * NI * NL, cudaMemcpyDeviceToHost);
 

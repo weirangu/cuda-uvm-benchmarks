@@ -13,9 +13,13 @@ void add(int n, float *x, float *y)
     y[i] = x[i] + y[i];
 }
  
-int main(void)
+int main(int argc, char** argv)
 {
-  int N = 1<<20;
+
+  if(argc < 2)
+    return 1;
+
+  int N = 1<<atoi(argv[1]);
   float *x, *y, *d_x, *d_y;
 
   x = (float*)malloc(N*sizeof(float));
@@ -37,13 +41,15 @@ int main(void)
   int numBlocks = (N + blockSize - 1) / blockSize;
 
 
-  for(int i = 0; i < 5; i++){
-    cudaMemcpy(d_x, x, N*sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_y, y, N*sizeof(float), cudaMemcpyHostToDevice);
+  //for(int i = 0; i < 5; i++){
+
 
     cudaEventCreate(&start);
     cudaEventCreate(&end);
     cudaEventRecord(start);
+
+    cudaMemcpy(d_x, x, N*sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_y, y, N*sizeof(float), cudaMemcpyHostToDevice);
 
    
     add<<<numBlocks, blockSize>>>(N, d_x, d_y);
@@ -53,7 +59,7 @@ int main(void)
     cudaEventSynchronize(end);
     cudaEventElapsedTime(&time, start, end);
     fprintf(stdout, "%0.6lf\n", time);
-  }
+  //}
 
   // Free memory
   cudaFree(d_x);

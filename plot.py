@@ -4,7 +4,8 @@ import matplotlib.pyplot as plt
 from argparse import ArgumentParser
 
 #sizes = ['100', '512', '1024', '1536', '2048', '4096']
-sizes = ['50','100','200','250','512','1024']
+#sizes = ['1','2','3','4','5']
+sizes = ['18', '19', '20', '21', '22', '23']
 width = 0.2
 
 def create_plot(test_names, title, xlabel, ylabel, filename):

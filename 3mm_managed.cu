@@ -137,22 +137,24 @@ void mm3Cuda(DATA_TYPE* A_gpu, DATA_TYPE* B_gpu, DATA_TYPE* C_gpu, DATA_TYPE* D_
 	dim3 grid2((size_t)(ceil( ((float)NL) / ((float)DIM_THREAD_BLOCK_X) )),(size_t)(ceil((float)NJ/ ((float)DIM_THREAD_BLOCK_Y) )));
 	dim3 grid3((size_t)(ceil( ((float)NL) / ((float)DIM_THREAD_BLOCK_X) )),(size_t)(ceil((float)NI/ ((float)DIM_THREAD_BLOCK_Y) )));
 
-	cudaEventCreate(&start);
-	cudaEventCreate(&end);
-	cudaEventRecord(start);
+  //for(int i = 0; i < 5; i++){
+    cudaEventCreate(&start);
+    cudaEventCreate(&end);
+    cudaEventRecord(start);
 
-	mm3_kernel1<<<grid1,block>>>(A_gpu, B_gpu, E_gpu,NI, NJ, NK, NL, NM);
-	cudaDeviceSynchronize();
-	mm3_kernel2<<<grid2,block>>>(C_gpu, D_gpu, F_gpu,NI, NJ, NK, NL, NM);
-	cudaDeviceSynchronize();
-	mm3_kernel3<<<grid3,block>>>(E_gpu, F_gpu, G_gpu,NI, NJ, NK, NL, NM);
-	cudaDeviceSynchronize();
+    mm3_kernel1<<<grid1,block>>>(A_gpu, B_gpu, E_gpu,NI, NJ, NK, NL, NM);
+    cudaDeviceSynchronize();
+    mm3_kernel2<<<grid2,block>>>(C_gpu, D_gpu, F_gpu,NI, NJ, NK, NL, NM);
+    cudaDeviceSynchronize();
+    mm3_kernel3<<<grid3,block>>>(E_gpu, F_gpu, G_gpu,NI, NJ, NK, NL, NM);
+    cudaDeviceSynchronize();
 
-	cudaEventRecord(end);
-	cudaEventSynchronize(end);
-	cudaEventElapsedTime(&time, start, end);
+    cudaEventRecord(end);
+    cudaEventSynchronize(end);
+    cudaEventElapsedTime(&time, start, end);
 
-	fprintf(stdout, "%0.6lf\n", time);
+    fprintf(stdout, "%0.6lf\n", time);
+  //}
 }
 
 
