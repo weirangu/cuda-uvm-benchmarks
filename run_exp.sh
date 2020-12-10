@@ -25,13 +25,15 @@ make add_unman
 #
 #rm *.txt
 
-for size in 50 100 200 250 512 1024; do
+for size in 200 250 512 1024 2048 4096; do
     ./3mm_man $size >> 3mm.txt
     ./3mm $size >> 3mm-unmanaged.txt
 done
 
 
 for size in 50 100 200 250 512 1024; do
+    rm 2DConvolution_tmp.txt
+    rm 2DConvolution-unmanaged_tmp.txt
     for i in 1 2 3 4 5; do
         ./2DConvolution $size >> 2DConvolution_tmp.txt
         ./2DConvolution-unmanaged $size >> 2DConvolution-unmanaged_tmp.txt
