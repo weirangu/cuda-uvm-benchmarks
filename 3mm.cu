@@ -23,11 +23,17 @@
 #define PERCENT_DIFF_ERROR_THRESHOLD 0.05
 
 /* Problem size. */
-# define NI 512
-# define NJ 512
-# define NK 512
-# define NL 512
-# define NM 512
+//# define NI 512
+//# define NJ 512
+//# define NK 512
+//# define NL 512
+//# define NM 512
+
+int NI; 
+int NJ;
+int NK;
+int NL;
+int NM;
 
 /* Thread block dimensions */
 #define DIM_THREAD_BLOCK_X 32
@@ -101,12 +107,11 @@ void GPU_argv_init()
 {
 	cudaDeviceProp deviceProp;
 	cudaGetDeviceProperties(&deviceProp, GPU_DEVICE);
-	printf("setting device %d with name %s\n",GPU_DEVICE,deviceProp.name);
 	cudaSetDevice( GPU_DEVICE );
 }
 
 	
-__global__ void mm3_kernel1(DATA_TYPE *A, DATA_TYPE *B, DATA_TYPE *E)
+__global__ void mm3_kernel1(DATA_TYPE *A, DATA_TYPE *B, DATA_TYPE *E, int NI, int NJ, int NK, int NL, int NM)
 {
 	int j = blockIdx.x * blockDim.x + threadIdx.x;
 	int i = blockIdx.y * blockDim.y + threadIdx.y;
@@ -122,7 +127,7 @@ __global__ void mm3_kernel1(DATA_TYPE *A, DATA_TYPE *B, DATA_TYPE *E)
 }
 
 	
-__global__ void mm3_kernel2(DATA_TYPE *C, DATA_TYPE *D, DATA_TYPE *F)
+__global__ void mm3_kernel2(DATA_TYPE *C, DATA_TYPE *D, DATA_TYPE *F, int NI, int NJ, int NK, int NL, int NM)
 {
 	int j = blockIdx.x * blockDim.x + threadIdx.x;
 	int i = blockIdx.y * blockDim.y + threadIdx.y;
@@ -138,7 +143,7 @@ __global__ void mm3_kernel2(DATA_TYPE *C, DATA_TYPE *D, DATA_TYPE *F)
 }
 
 	
-__global__ void mm3_kernel3(DATA_TYPE *E, DATA_TYPE *F, DATA_TYPE *G)
+__global__ void mm3_kernel3(DATA_TYPE *E, DATA_TYPE *F, DATA_TYPE *G, int NI, int NJ, int NK, int NL, int NM)
 {
 	int j = blockIdx.x * blockDim.x + threadIdx.x;
 	int i = blockIdx.y * blockDim.y + threadIdx.y;
@@ -154,55 +159,11 @@ __global__ void mm3_kernel3(DATA_TYPE *E, DATA_TYPE *F, DATA_TYPE *G)
 }
 
 
-void mm3_cpu(DATA_TYPE *A, DATA_TYPE *B, DATA_TYPE *C, DATA_TYPE *D, DATA_TYPE *E, DATA_TYPE *F, DATA_TYPE *G)
-{
-	int i,j,k;
-	
-	/* E := A*B */
-	for (i = 0; i < NI; i++)
-	{
-		for (j = 0; j < NJ; j++)
-		{
-			E[i*NJ + j] = 0;
-			for (k = 0; k < NK; ++k)
-			{
-				E[i*NJ + j] += A[i*NK + k] * B[k*NJ + j];
-			}
-		}
-	}
-		
-	/* F := C*D */
-	for (i = 0; i < NJ; i++)
-	{
-		for (j = 0; j < NL; j++)
-		{
-			F[i*NL + j] = 0;
-			for (k = 0; k < NM; ++k)
-			{
-				F[i*NL + j] += C[i*NM + k] * D[k*NL + j];
-			}
-		}
-	}
-
-  	/* G := E*F */
-	for (i = 0; i < NI; i++)
-	{
-		for (j = 0; j < NL; j++)
-		{
-			G[i*NL + j] = 0;
-			for (k = 0; k < NJ; ++k)
-			{
-				G[i*NL + j] += E[i*NJ + k] * F[k*NL + j];
-			}
-		}
-	}
-}
-
 
 void mm3Cuda(DATA_TYPE* A, DATA_TYPE* B, DATA_TYPE* C, DATA_TYPE* D, DATA_TYPE* E, DATA_TYPE* F, 
-		DATA_TYPE* G, DATA_TYPE* G_outputFromGpu)
+		DATA_TYPE* G, DATA_TYPE* G_outputFromGpu, int NI, int NJ, int NK, int NL, int NM)
 {
-	double t_start, t_end;
+	//double t_start, t_end;
 
 	DATA_TYPE *A_gpu;
 	DATA_TYPE *B_gpu;
@@ -234,16 +195,16 @@ void mm3Cuda(DATA_TYPE* A, DATA_TYPE* B, DATA_TYPE* C, DATA_TYPE* D, DATA_TYPE* 
 	dim3 grid3((size_t)(ceil( ((float)NL) / ((float)DIM_THREAD_BLOCK_X) )),(size_t)(ceil((float)NI/ ((float)DIM_THREAD_BLOCK_Y) )));
 
 	t_start = rtclock();
-	mm3_kernel1<<<grid1,block>>>(A_gpu, B_gpu, E_gpu);
+	mm3_kernel1<<<grid1,block>>>(A_gpu, B_gpu, E_gpu, NI, NJ, NK, NL, NM);
   cudaDeviceSynchronize();
-	mm3_kernel2<<<grid2,block>>>(C_gpu, D_gpu, F_gpu);
+	mm3_kernel2<<<grid2,block>>>(C_gpu, D_gpu, F_gpu, NI, NJ, NK, NL, NM);
   cudaDeviceSynchronize();
-	mm3_kernel3<<<grid3,block>>>(E_gpu, F_gpu, G_gpu);
+	mm3_kernel3<<<grid3,block>>>(E_gpu, F_gpu, G_gpu, NI, NJ, NK, NL, NM);
   cudaDeviceSynchronize();
 	t_end = rtclock();
 	cudaMemcpy(G_outputFromGpu, G_gpu, sizeof(DATA_TYPE) * NI * NL, cudaMemcpyDeviceToHost);
 
-	fprintf(stdout, "GPU Runtime: %0.6lfs\n", t_end - t_start);
+	//fprintf(stdout, "GPU Runtime: %0.6lfs\n", t_end - t_start);
 	
 	//cudaFree(A_gpu);
 	//cudaFree(B_gpu);
@@ -257,6 +218,17 @@ void mm3Cuda(DATA_TYPE* A, DATA_TYPE* B, DATA_TYPE* C, DATA_TYPE* D, DATA_TYPE* 
 
 int main(int argc, char** argv)
 {
+  if(argc < 2){
+    printf("please no troll\n");
+    return 1;
+  }
+
+  NI = atoi(argv[1]); 
+  NJ = atoi(argv[1]);
+  NK = atoi(argv[1]);
+  NL = atoi(argv[1]);
+  NM = atoi(argv[1]);
+
 	double t_start, t_end;
 
 	DATA_TYPE* A;
@@ -282,10 +254,10 @@ int main(int argc, char** argv)
 	GPU_argv_init();
 
 	t_start = rtclock();
-	mm3Cuda(A, B, C, D, E, F, G, G_outputFromGpu);
+	mm3Cuda(A, B, C, D, E, F, G, G_outputFromGpu, NI, NJ, NK, NL, NM);
 	t_end = rtclock();
 
-	fprintf(stdout, "TOTAL Runtime: %0.6lfs\n", t_end - t_start);
+	fprintf(stdout, "%0.6lf\n", t_end - t_start);
 
 	free(A);
 	free(B);
