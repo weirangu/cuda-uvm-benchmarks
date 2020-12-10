@@ -3,7 +3,8 @@ from sys import argv
 import matplotlib.pyplot as plt
 from argparse import ArgumentParser
 
-sizes = ['100', '512', '1024', '1536', '2048', '4096']
+#sizes = ['100', '512', '1024', '1536', '2048', '4096']
+sizes = ['50','100','200','250','512','1024']
 width = 0.2
 
 def create_plot(test_names, title, xlabel, ylabel, filename):

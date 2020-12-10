@@ -36,32 +36,11 @@ int main(void)
 	cudaEventCreate(&end);
 	cudaEventRecord(start);
 
-#ifdef PREF
-  // Prefetch the data to the GPU
-  int device = -1;
-  cudaGetDevice(&device);
-
-  cudaStream_t stream1;
-  cudaStreamCreate(&stream1);
-
-  cudaStream_t stream2;
-  cudaStreamCreate(&stream2);
-
-  cudaStream_t stream3;
-  cudaStreamCreate(&stream3);
-
-  cudaMemPrefetchAsync(x, N*sizeof(float), device, stream1);
-  cudaMemPrefetchAsync(y, N*sizeof(float), device, stream2);
-#endif
   // Launch kernel on 1M elements on the GPU
   int blockSize = 256;
   int numBlocks = (N + blockSize - 1) / blockSize;
 
-#ifdef PREF
-  add<<<numBlocks, blockSize, 0, stream3>>>(N, x, y);
-#else
   add<<<numBlocks, blockSize>>>(N, x, y);
-#endif
  
   // Wait for GPU to finish before accessing on host
   cudaDeviceSynchronize();

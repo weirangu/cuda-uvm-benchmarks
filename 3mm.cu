@@ -175,9 +175,6 @@ void mm3Cuda(DATA_TYPE* A, DATA_TYPE* B, DATA_TYPE* C, DATA_TYPE* D, DATA_TYPE* 
   cudaEvent_t start, end;
   float time;
 
-	cudaEventCreate(&start);
-	cudaEventCreate(&end);
-	cudaEventRecord(start);
 
 	cudaMalloc((void **)&A_gpu, sizeof(DATA_TYPE) * NI * NK);
 	cudaMalloc((void **)&B_gpu, sizeof(DATA_TYPE) * NK * NJ);
@@ -186,6 +183,10 @@ void mm3Cuda(DATA_TYPE* A, DATA_TYPE* B, DATA_TYPE* C, DATA_TYPE* D, DATA_TYPE* 
 	cudaMalloc((void **)&E_gpu, sizeof(DATA_TYPE) * NI * NJ);
 	cudaMalloc((void **)&F_gpu, sizeof(DATA_TYPE) * NJ * NL);
 	cudaMalloc((void **)&G_gpu, sizeof(DATA_TYPE) * NI * NL);
+
+	cudaEventCreate(&start);
+	cudaEventCreate(&end);
+	cudaEventRecord(start);
 
 	cudaMemcpy(A_gpu, A, sizeof(DATA_TYPE) * NI * NK, cudaMemcpyHostToDevice);
 	cudaMemcpy(B_gpu, B, sizeof(DATA_TYPE) * NK * NJ, cudaMemcpyHostToDevice);
