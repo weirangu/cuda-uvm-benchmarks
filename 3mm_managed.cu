@@ -140,12 +140,14 @@ void mm3Cuda(DATA_TYPE* A_gpu, DATA_TYPE* B_gpu, DATA_TYPE* C_gpu, DATA_TYPE* D_
 	cudaEventCreate(&start);
 	cudaEventCreate(&end);
 	cudaEventRecord(start);
+
 	mm3_kernel1<<<grid1,block>>>(A_gpu, B_gpu, E_gpu,NI, NJ, NK, NL, NM);
 	cudaDeviceSynchronize();
 	mm3_kernel2<<<grid2,block>>>(C_gpu, D_gpu, F_gpu,NI, NJ, NK, NL, NM);
 	cudaDeviceSynchronize();
 	mm3_kernel3<<<grid3,block>>>(E_gpu, F_gpu, G_gpu,NI, NJ, NK, NL, NM);
 	cudaDeviceSynchronize();
+
 	cudaEventRecord(end);
 	cudaEventSynchronize(end);
 	cudaEventElapsedTime(&time, start, end);
@@ -187,6 +189,7 @@ int main(int argc, char** argv)
 	init_array(A, B, C, D);
 
 	mm3Cuda(A, B, C, D, E, F, G, NI, NJ, NK, NL, NM); 
+
 	cudaFree(A);
 	cudaFree(B);
 	cudaFree(C);
