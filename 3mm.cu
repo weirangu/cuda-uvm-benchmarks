@@ -172,6 +172,12 @@ void mm3Cuda(DATA_TYPE* A, DATA_TYPE* B, DATA_TYPE* C, DATA_TYPE* D, DATA_TYPE* 
 	DATA_TYPE *E_gpu;
 	DATA_TYPE *F_gpu;
 	DATA_TYPE *G_gpu;
+  cudaEvent_t start, end;
+  float time;
+
+	cudaEventCreate(&start);
+	cudaEventCreate(&end);
+	cudaEventRecord(start);
 
 	cudaMalloc((void **)&A_gpu, sizeof(DATA_TYPE) * NI * NK);
 	cudaMalloc((void **)&B_gpu, sizeof(DATA_TYPE) * NK * NJ);
@@ -201,7 +207,13 @@ void mm3Cuda(DATA_TYPE* A, DATA_TYPE* B, DATA_TYPE* C, DATA_TYPE* D, DATA_TYPE* 
   cudaDeviceSynchronize();
 	mm3_kernel3<<<grid3,block>>>(E_gpu, F_gpu, G_gpu, NI, NJ, NK, NL, NM);
   cudaDeviceSynchronize();
-	//t_end = rtclock();
+
+	cudaEventRecord(end);
+	cudaEventSynchronize(end);
+	cudaEventElapsedTime(&time, start, end);
+
+	fprintf(stdout, "%0.6lf\n", time);
+
 	cudaMemcpy(G_outputFromGpu, G_gpu, sizeof(DATA_TYPE) * NI * NL, cudaMemcpyDeviceToHost);
 
 	//fprintf(stdout, "GPU Runtime: %0.6lfs\n", t_end - t_start);
@@ -229,8 +241,6 @@ int main(int argc, char** argv)
   NL = atoi(argv[1]);
   NM = atoi(argv[1]);
 
-	double t_start, t_end;
-
 	DATA_TYPE* A;
 	DATA_TYPE* B;
 	DATA_TYPE* C;
@@ -253,11 +263,7 @@ int main(int argc, char** argv)
 
 	GPU_argv_init();
 
-	t_start = rtclock();
 	mm3Cuda(A, B, C, D, E, F, G, G_outputFromGpu, NI, NJ, NK, NL, NM);
-	t_end = rtclock();
-
-	fprintf(stdout, "%0.6lf\n", t_end - t_start);
 
 	free(A);
 	free(B);
