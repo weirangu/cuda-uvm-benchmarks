@@ -99,19 +99,13 @@ int main(int argc, char *argv[])
 	cudaMallocManaged( &B, NI*NJ*sizeof(DATA_TYPE) );
 	//initialize the arrays
 	init(A, NI, NJ);
-	for (int i = 0; i < NUM_ITERATIONS + 1; ++i) {
-		cudaEventCreate(&start);
-		cudaEventCreate(&end);
-		cudaEventRecord(start);
-		convolution2DCuda(A, B, NI, NJ);
-		cudaEventRecord(end);
-		cudaEventSynchronize(end);
-		cudaEventElapsedTime(&time, start, end);
-		if (i > 0) {
-			// first iteration warms up the GPU
-			average_time += time / NUM_ITERATIONS;
-		}
-	}
+	cudaEventCreate(&start);
+	cudaEventCreate(&end);
+	cudaEventRecord(start);
+	convolution2DCuda(A, B, NI, NJ);
+	cudaEventRecord(end);
+	cudaEventSynchronize(end);
+	cudaEventElapsedTime(&average_time, start, end);
 #else
 	DATA_TYPE *gA, *gB;
 	cudaMalloc( &gA, NI*NJ*sizeof(DATA_TYPE) );
@@ -120,21 +114,15 @@ int main(int argc, char *argv[])
 	B = (DATA_TYPE *) malloc( NI*NJ*sizeof(DATA_TYPE) );
 	//initialize the arrays
 	init(A, NI, NJ);
+	cudaEventCreate(&start);
+	cudaEventCreate(&end);
+	cudaEventRecord(start);
 	cudaMemcpy(gA, A, NI*NJ*sizeof(DATA_TYPE), cudaMemcpyHostToDevice);
+	convolution2DCuda(gA, gB, NI, NJ);
+	cudaEventRecord(end);
+	cudaEventSynchronize(end);
+	cudaEventElapsedTime(&average_time, start, end);
 
-	for (int i = 0; i < NUM_ITERATIONS + 1; ++i) {
-		cudaEventCreate(&start);
-		cudaEventCreate(&end);
-		cudaEventRecord(start);
-		convolution2DCuda(gA, gB, NI, NJ);
-		cudaEventRecord(end);
-		cudaEventSynchronize(end);
-		cudaEventElapsedTime(&time, start, end);
-		if (i > 0) {
-			// first iteration warms up the GPU
-			average_time += time / NUM_ITERATIONS;
-		}
-	}
 	cudaMemcpy(B, gB, NI*NJ*sizeof(DATA_TYPE), cudaMemcpyDeviceToHost);
 #endif
 	printf("%f\n", average_time);
