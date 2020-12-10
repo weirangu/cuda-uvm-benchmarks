@@ -25,31 +25,31 @@ make add_unman
 #
 #rm *.txt
 
-#for size in 50 100 200 250 512 1024; do
-#    ./3mm_man $size >> 3mm.txt
-#    ./3mm $size >> 3mm-unmanaged.txt
-#done
-#
-#
-#for size in 50 100 200 250 512 1024; do
-#    for i in 1 2 3 4 5; do
-#        ./2DConvolution $size >> 2DConvolution_tmp.txt
-#        ./2DConvolution-unmanaged $size >> 2DConvolution-unmanaged_tmp.txt
-#    done
-#    python3 get_avg.py
-#done
-#
-#
-#python3 plot.py line 2D_line tests time 2D_line.png 2DConvolution 
-#python3 plot.py line 3mm_line tests time 3mm_line.png 3mm 
-
-
-for i in 18 19 20 21 22 23; do
-    ./add_man $i >> add.txt
-    ./add_unman $i >> add-unmanaged.txt
+for size in 50 100 200 250 512 1024; do
+    ./3mm_man $size >> 3mm.txt
+    ./3mm $size >> 3mm-unmanaged.txt
 done
 
-python3 plot.py line add size time add.png add
+
+for size in 50 100 200 250 512 1024; do
+    for i in 1 2 3 4 5; do
+        ./2DConvolution $size >> 2DConvolution_tmp.txt
+        ./2DConvolution-unmanaged $size >> 2DConvolution-unmanaged_tmp.txt
+    done
+    python3 get_avg.py
+done
+
+
+python3 plot.py line "2D convolution, ratio of run-time with diff sizes" size ratio 2D_line.png 2DConvolution 
+python3 plot.py line "3 matrix multiplication, ratio of run-time with diff sizes " size ratio 3mm_line.png 3mm 
+
+
+#for i in 18 19 20 21 22 23; do
+#    ./add_man $i >> add.txt
+#    ./add_unman $i >> add-unmanaged.txt
+#done
+#
+#python3 plot.py line add "size, 2^x" ratio add.png add
 
 #./add_man >> add.txt
 #./add_unman >> add-unmanaged.txt
