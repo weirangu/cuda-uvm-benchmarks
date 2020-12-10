@@ -22,8 +22,10 @@ def create_plot(test_names, title, xlabel, ylabel, filename):
                 x.append(i)
                 xunmanaged.append(i+width)
 
-                y.append(mean(map(float, lines)))
-                yunmanaged.append(mean(map(float, lines_unmanaged)))
+                managed = mean(map(float, lines))
+                unmanaged = mean(map(float, lines_unmanaged))
+                y.append(1)
+                yunmanaged.append(unmanaged / managed)
 
                 xticks.append(i + width/2)
 
@@ -48,8 +50,10 @@ def create_line_plot(test_name, title, xlabel, ylabel, filename):
             lines = f.readlines()
             lines_unmanaged = uf.readlines()
 
-            y.extend(map(float, lines))
-            yunmanaged.extend(map(float, lines_unmanaged))
+            managed = list(map(float, lines))
+            unmanaged = list(map(float, lines_unmanaged))
+            y.extend([1] * len(sizes))
+            yunmanaged.extend([managed[i] / unmanaged[i] for i in range(len(sizes))])
     
     plt.plot(sizes, y, 'r', label='With UVM')
     plt.plot(sizes, yunmanaged, 'b', label='Without UVM')
