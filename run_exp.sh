@@ -18,7 +18,7 @@ for i in 100 512 1024 1536 2048 4096; do
     ./2DConvolution-unmanaged 4096 >> 2DConvolution-unmanaged.txt
 done
 
-python3 bar plot.py please tests time PLEASE 2DConvolution 3mm
+python3 plot.py bar please tests time bar.png 2DConvolution 3mm
 
 
 for size in 100 512 1024 1536 2048 4096; do
@@ -29,4 +29,5 @@ for size in 100 512 1024 1536 2048 4096; do
 done
 
 
-python3 line plot.py please tests time PLEASE 2DConvolution 3mm
+python3 plot.py line 2D_line tests time 2D_line.png 2DConvolution 
+python3 plot.py line 3mm_line tests time 3mm_line.png 3mm 
