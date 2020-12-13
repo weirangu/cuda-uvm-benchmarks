@@ -39,7 +39,7 @@ typedef float DATA_TYPE;
 
 
 
-void init_array(DATA_TYPE *x, DATA_TYPE *A)
+void init_array(DATA_TYPE *x, DATA_TYPE *A, int NX, int NY)
 {
 	int i, j;
 
@@ -62,7 +62,7 @@ void GPU_argv_init()
 }
 
 
-__global__ void atax_kernel1(DATA_TYPE *A, DATA_TYPE *x, DATA_TYPE *tmp)
+__global__ void atax_kernel1(DATA_TYPE *A, DATA_TYPE *x, DATA_TYPE *tmp, int NX, int NY)
 {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -76,7 +76,7 @@ __global__ void atax_kernel1(DATA_TYPE *A, DATA_TYPE *x, DATA_TYPE *tmp)
 	}
 }
 
-__global__ void atax_kernel2(DATA_TYPE *A, DATA_TYPE *y, DATA_TYPE *tmp)
+__global__ void atax_kernel2(DATA_TYPE *A, DATA_TYPE *y, DATA_TYPE *tmp, int NX, int NY)
 {
 	int j = blockIdx.x * blockDim.x + threadIdx.x;
 	
@@ -91,10 +91,10 @@ __global__ void atax_kernel2(DATA_TYPE *A, DATA_TYPE *y, DATA_TYPE *tmp)
 }
 
 
-void ataxGpu(DATA_TYPE* A_gpu, DATA_TYPE* x_gpu, DATA_TYPE* y_gpu, DATA_TYPE* tmp_gpu, DATA_TYPE* y_outputFromGpu)
+void ataxGpu(DATA_TYPE* A_gpu, DATA_TYPE* x_gpu, DATA_TYPE* y_gpu, DATA_TYPE* tmp_gpu, DATA_TYPE* y_outputFromGpu, int NX, int NY)
 {
-  cudaEvent_t start, end;
-  float time;
+  //cudaEvent_t start, end;
+  //float time;
 	dim3 block(DIM_THREAD_BLOCK_X, DIM_THREAD_BLOCK_Y);
 	dim3 grid1((size_t)(ceil( ((float)NX) / ((float)block.x) )), 1);
 	dim3 grid2((size_t)(ceil( ((float)NY) / ((float)block.x) )), 1);
@@ -107,9 +107,9 @@ void ataxGpu(DATA_TYPE* A_gpu, DATA_TYPE* x_gpu, DATA_TYPE* y_gpu, DATA_TYPE* tm
   //cudaEventRecord(start);
 
   t_start = rtclock();
-	atax_kernel1<<< grid1, block >>>(A_gpu,x_gpu,tmp_gpu);
+	atax_kernel1<<< grid1, block >>>(A_gpu,x_gpu,tmp_gpu, NX, NY);
   cudaDeviceSynchronize();
-	atax_kernel2<<< grid2, block >>>(A_gpu,y_gpu,tmp_gpu);
+	atax_kernel2<<< grid2, block >>>(A_gpu,y_gpu,tmp_gpu, NX, NY);
   cudaDeviceSynchronize();
   t_end = rtclock();
 	fprintf(stdout, "%0.6lfs\n", t_end - t_start);
@@ -147,10 +147,10 @@ int main(int argc, char** argv)
 	y_outputFromGpu = (DATA_TYPE*)malloc(NY*sizeof(DATA_TYPE));
 	tmp = (DATA_TYPE*)malloc(NX*sizeof(DATA_TYPE));
 
-	init_array(x, A);
+	init_array(x, A, NX, NY);
 
 	GPU_argv_init();
-	ataxGpu(A, x, y, tmp, y_outputFromGpu);
+	ataxGpu(A, x, y, tmp, y_outputFromGpu, NX, NY);
 	
 
 	cudaFree(A);
