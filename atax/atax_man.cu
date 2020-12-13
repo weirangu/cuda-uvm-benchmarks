@@ -144,8 +144,8 @@ int main(int argc, char** argv)
 	cudaMallocManaged(&A, NX*NY*sizeof(DATA_TYPE));
 	cudaMallocManaged(&x, NY*sizeof(DATA_TYPE));
 	cudaMallocManaged(&y, NY*sizeof(DATA_TYPE));
-	y_outputFromGpu = (DATA_TYPE*)malloc(NY*sizeof(DATA_TYPE));
-	tmp = (DATA_TYPE*)malloc(NX*sizeof(DATA_TYPE));
+	cudaMallocManaged(&y_outputFromGpu, NY*sizeof(DATA_TYPE));
+  cudaMallocManaged(&tmp, NX*sizeof(DATA_TYPE));
 
 	init_array(x, A, NX, NY);
 
