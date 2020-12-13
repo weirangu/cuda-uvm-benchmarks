@@ -23,8 +23,8 @@
 #define GPU_DEVICE 0
 
 /* Problem size. */
-#define NX 4096
-#define NY 4096
+//#define NX 4096
+//#define NY 4096
 
 /* Thread block dimensions */
 #define DIM_THREAD_BLOCK_X 256
@@ -39,7 +39,7 @@ typedef float DATA_TYPE;
 
 
 
-void init_array(DATA_TYPE *x, DATA_TYPE *A)
+void init_array(DATA_TYPE *x, DATA_TYPE *A, int NX, int NY)
 {
 	int i, j;
 
@@ -54,34 +54,16 @@ void init_array(DATA_TYPE *x, DATA_TYPE *A)
 }
 
 
-void compareResults(DATA_TYPE *z, DATA_TYPE *z_outputFromGpu)
-{
-	int i, fail;
-	fail = 0;
-
-	for (i=0; i<NY; i++)
-	{
-		if (percentDiff(z[i], z_outputFromGpu[i]) > PERCENT_DIFF_ERROR_THRESHOLD)
-		{
-			fail++;
-		}		
-	}
-	
-	// print results
-	printf("Non-Matching CPU-GPU Outputs Beyond Error Threshold of %4.2f Percent: %d\n", PERCENT_DIFF_ERROR_THRESHOLD, fail);
-}
-
 
 void GPU_argv_init()
 {
 	cudaDeviceProp deviceProp;
 	cudaGetDeviceProperties(&deviceProp, GPU_DEVICE);
-	printf("setting device %d with name %s\n",GPU_DEVICE,deviceProp.name);
 	cudaSetDevice( GPU_DEVICE );
 }
 
 
-__global__ void atax_kernel1(DATA_TYPE *A, DATA_TYPE *x, DATA_TYPE *tmp)
+__global__ void atax_kernel1(DATA_TYPE *A, DATA_TYPE *x, DATA_TYPE *tmp, int NX, int NY)
 {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -95,7 +77,7 @@ __global__ void atax_kernel1(DATA_TYPE *A, DATA_TYPE *x, DATA_TYPE *tmp)
 	}
 }
 
-__global__ void atax_kernel2(DATA_TYPE *A, DATA_TYPE *y, DATA_TYPE *tmp)
+__global__ void atax_kernel2(DATA_TYPE *A, DATA_TYPE *y, DATA_TYPE *tmp, int NX, int NY)
 {
 	int j = blockIdx.x * blockDim.x + threadIdx.x;
 	
@@ -109,34 +91,7 @@ __global__ void atax_kernel2(DATA_TYPE *A, DATA_TYPE *y, DATA_TYPE *tmp)
 	}
 }
 
-
-void atax_cpu(DATA_TYPE* A, DATA_TYPE* x, DATA_TYPE* y, DATA_TYPE* tmp)
-{
-	int i,j;
-	
-	for (i= 0; i < NY; i++)
-	{
-    	y[i] = 0;
-	}
-  
-	for (i = 0; i < NX; i++)
- 	{
-      	tmp[i] = 0;
-
-      	for (j = 0; j < NY; j++)
-		{
-			tmp[i] = tmp[i] + A[i*NY + j] * x[j];
-		}
-		
-      	for (j = 0; j < NY; j++)
-		{
-			y[j] = y[j] + A[i*NY + j] * tmp[i];
-		}
-    }
-}
-
-
-void ataxGpu(DATA_TYPE* A, DATA_TYPE* x, DATA_TYPE* y, DATA_TYPE* tmp, DATA_TYPE* y_outputFromGpu)
+void ataxGpu(DATA_TYPE* A, DATA_TYPE* x, DATA_TYPE* y, DATA_TYPE* tmp, DATA_TYPE* y_outputFromGpu, int NX, int NY)
 {
 	double t_start, t_end;
 
@@ -160,12 +115,12 @@ void ataxGpu(DATA_TYPE* A, DATA_TYPE* x, DATA_TYPE* y, DATA_TYPE* tmp, DATA_TYPE
 	dim3 grid2((size_t)(ceil( ((float)NY) / ((float)block.x) )), 1);
 
 	t_start = rtclock();
-	atax_kernel1<<< grid1, block >>>(A_gpu,x_gpu,tmp_gpu);
-	cudaThreadSynchronize();
-	atax_kernel2<<< grid2, block >>>(A_gpu,y_gpu,tmp_gpu);
-	cudaThreadSynchronize();
+	atax_kernel1<<< grid1, block >>>(A_gpu,x_gpu,tmp_gpu, NX, NY);
+  cudaDeviceSynchronize();
+	atax_kernel2<<< grid2, block >>>(A_gpu,y_gpu,tmp_gpu, NX, NY);
+  cudaDeviceSynchronize();
 	t_end = rtclock();
-	fprintf(stdout, "GPU Runtime: %0.6lfs\n", t_end - t_start);
+	fprintf(stdout, "%0.6lfs\n", t_end - t_start);
 	
 	cudaMemcpy(y_outputFromGpu, y_gpu, sizeof(DATA_TYPE) * NX, cudaMemcpyDeviceToHost);
 
@@ -178,7 +133,13 @@ void ataxGpu(DATA_TYPE* A, DATA_TYPE* x, DATA_TYPE* y, DATA_TYPE* tmp, DATA_TYPE
 
 int main(int argc, char** argv)
 {
-	double t_start, t_end;
+  if(argc < 2){
+    printf("please no troll\n");
+    return 1;
+  }
+
+  int NX = atoi(argv[1]);
+  int NY = atoi(argv[1]);
 
 	DATA_TYPE* A;
 	DATA_TYPE* x;
@@ -192,18 +153,11 @@ int main(int argc, char** argv)
 	y_outputFromGpu = (DATA_TYPE*)malloc(NY*sizeof(DATA_TYPE));
 	tmp = (DATA_TYPE*)malloc(NX*sizeof(DATA_TYPE));
 
-	init_array(x, A);
+	init_array(x, A, NX, NY);
 
 	GPU_argv_init();
-	ataxGpu(A, x, y, tmp, y_outputFromGpu);
+	ataxGpu(A, x, y, tmp, y_outputFromGpu, NX, NY);
 	
-	t_start = rtclock();
-	atax_cpu(A, x, y, tmp);
-	t_end = rtclock();
-	fprintf(stdout, "CPU Runtime: %0.6lfs\n", t_end - t_start);
-
-	compareResults(y, y_outputFromGpu);
-
 	free(A);
 	free(x);
 	free(y);
