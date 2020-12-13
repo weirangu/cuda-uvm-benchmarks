@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 #include <cuda.h>
 
@@ -18,7 +19,7 @@ void init(double* A, int size, int dims)
 __global__ void reduce_kernel(double *input, double *output, int num_arr) {
 	extern __shared__ double shared_mem[];
 	int dim = blockIdx.y;
-	input += dim * gridDim.x;
+	input += dim * gridDim.x * 2;
 
 	int thread_id = threadIdx.x;
 	int i = blockIdx.x * blockDim.x * 2 + thread_id;
@@ -30,12 +31,11 @@ __global__ void reduce_kernel(double *input, double *output, int num_arr) {
 	}
 	__syncthreads();
 
-	if (i + blockDim.x * 2 < num_arr) {
-		shared_mem[thread_id] += input[i + blockDim.x * 2];
+	if (i + blockDim.x < num_arr) {
+		shared_mem[thread_id] += input[i + blockDim.x];
 	}
 	__syncthreads();
 
-	// TODO: Maybe unroll?
 	for (int j = blockDim.x / 2; j > 0; j /= 2) {
 		if (thread_id < j) {
 			shared_mem[thread_id] += shared_mem[thread_id + j];
@@ -44,7 +44,7 @@ __global__ void reduce_kernel(double *input, double *output, int num_arr) {
 	}
 
 	if (thread_id == 0) {
-		output[dim] = shared_mem[0];
+		output[dim] += shared_mem[0];
 	}
 }
 
@@ -53,7 +53,6 @@ void reduce_cuda(int num_dims, int num_arr)
 	int total_size = num_dims * num_arr * sizeof(double);
 	double *arr;
 	double *sum;
-	printf("total size %d\n", total_size);
 
 #ifdef UNMANAGED
 	arr = (double *) malloc(total_size);
@@ -61,6 +60,7 @@ void reduce_cuda(int num_dims, int num_arr)
 #else
 	cudaMallocManaged(&arr, total_size);
 	cudaMallocManaged(&sum, sizeof(double) * num_dims);
+	cudaMemset(sum, 0, sizeof(double) * num_dims);
 #endif
 
 	init(arr, num_dims * num_arr, num_arr);
@@ -78,6 +78,7 @@ void reduce_cuda(int num_dims, int num_arr)
 	cudaMalloc(&arr_gpu, total_size);
 	cudaMalloc(&sum_gpu, sizeof(double) * num_dims);
 	cudaMemcpy(arr_gpu, arr, total_size, cudaMemcpyHostToDevice);
+	cudaMemset(sum_gpu, 0, sizeof(double) * num_dims);
 
 	cudaEventRecord(start);
 	reduce_kernel<<<grid, 512, sizeof(double) * 512>>>(arr_gpu, sum_gpu, num_arr);
@@ -110,12 +111,13 @@ void reduce_cuda(int num_dims, int num_arr)
 int main(int argc, char *argv[])
 {
 	// handle command line arguments
-	if (argc != 3) {
-		printf("Incorrect command line arguments! Need to provide num_dims and num_arr.\n");
+	if (argc != 2) {
+		printf("Incorrect command line arguments! Need to provide num_arr.\n");
 		return -1;
 	}
-	int num_dims = strtol(argv[1], NULL, 10);
-	int num_arr = strtol(argv[2], NULL, 10);
+	// int num_dims = strtol(argv[1], NULL, 10);
+	int num_dims = 1;
+	int num_arr = strtol(argv[1], NULL, 10);
 
 	reduce_cuda(num_dims, num_arr);
 	return 0;
