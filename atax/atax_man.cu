@@ -15,7 +15,7 @@
 #include <sys/time.h>
 #include <cuda.h>
 
-#include "common/polybenchUtilFuncts.h"
+#include "../common/polybenchUtilFuncts.h"
 
 //define the error threshold for the results "not matching"
 #define PERCENT_DIFF_ERROR_THRESHOLD 0.5
@@ -23,8 +23,8 @@
 #define GPU_DEVICE 0
 
 /* Problem size. */
-#define NX 4096
-#define NY 4096
+//#define NX 4096
+//#define NY 4096
 
 /* Thread block dimensions */
 #define DIM_THREAD_BLOCK_X 256
@@ -58,7 +58,6 @@ void GPU_argv_init()
 {
 	cudaDeviceProp deviceProp;
 	cudaGetDeviceProperties(&deviceProp, GPU_DEVICE);
-	printf("setting device %d with name %s\n",GPU_DEVICE,deviceProp.name);
 	cudaSetDevice( GPU_DEVICE );
 }
 
@@ -94,18 +93,33 @@ __global__ void atax_kernel2(DATA_TYPE *A, DATA_TYPE *y, DATA_TYPE *tmp)
 
 void ataxGpu(DATA_TYPE* A_gpu, DATA_TYPE* x_gpu, DATA_TYPE* y_gpu, DATA_TYPE* tmp_gpu, DATA_TYPE* y_outputFromGpu)
 {
-	double t_start, t_end;
+  cudaEvent_t start, end;
+  float time;
 	dim3 block(DIM_THREAD_BLOCK_X, DIM_THREAD_BLOCK_Y);
 	dim3 grid1((size_t)(ceil( ((float)NX) / ((float)block.x) )), 1);
 	dim3 grid2((size_t)(ceil( ((float)NY) / ((float)block.x) )), 1);
 
-	t_start = rtclock();
+  double t_start, t_end;
+
+
+  //cudaEventCreate(&start);
+  //cudaEventCreate(&end);
+  //cudaEventRecord(start);
+
+  t_start = rtclock();
 	atax_kernel1<<< grid1, block >>>(A_gpu,x_gpu,tmp_gpu);
   cudaDeviceSynchronize();
 	atax_kernel2<<< grid2, block >>>(A_gpu,y_gpu,tmp_gpu);
   cudaDeviceSynchronize();
-	t_end = rtclock();
-	fprintf(stdout, "GPU Runtime: %0.6lfs\n", t_end - t_start);
+  t_end = rtclock();
+	fprintf(stdout, "%0.6lfs\n", t_end - t_start);
+
+  //cudaEventRecord(end);
+  //cudaEventSynchronize(end);
+  //cudaEventElapsedTime(&time, start, end);
+
+  //fprintf(stdout, "%0.6lf\n", time);
+
 	
 	cudaMemcpy(y_outputFromGpu, y_gpu, sizeof(DATA_TYPE) * NX, cudaMemcpyDeviceToHost);
 }
@@ -113,6 +127,14 @@ void ataxGpu(DATA_TYPE* A_gpu, DATA_TYPE* x_gpu, DATA_TYPE* y_gpu, DATA_TYPE* tm
 
 int main(int argc, char** argv)
 {
+  if(argc < 2){
+    printf("please no troll\n");
+    return 1;
+  }
+
+  int NX = atoi(argv[1]);
+  int NY = atoi(argv[1]);
+
 	DATA_TYPE* A;
 	DATA_TYPE* x;
 	DATA_TYPE* y;
