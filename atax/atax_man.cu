@@ -39,7 +39,7 @@ typedef float DATA_TYPE;
 
 
 
-void init_array(DATA_TYPE *x, DATA_TYPE *A)
+void init_array(DATA_TYPE *x, DATA_TYPE *A, int NX, int NY)
 {
 	int i, j;
 
@@ -62,7 +62,7 @@ void GPU_argv_init()
 }
 
 
-__global__ void atax_kernel1(DATA_TYPE *A, DATA_TYPE *x, DATA_TYPE *tmp)
+__global__ void atax_kernel1(DATA_TYPE *A, DATA_TYPE *x, DATA_TYPE *tmp, int NX, int NY)
 {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -76,7 +76,7 @@ __global__ void atax_kernel1(DATA_TYPE *A, DATA_TYPE *x, DATA_TYPE *tmp)
 	}
 }
 
-__global__ void atax_kernel2(DATA_TYPE *A, DATA_TYPE *y, DATA_TYPE *tmp)
+__global__ void atax_kernel2(DATA_TYPE *A, DATA_TYPE *y, DATA_TYPE *tmp, int NX, int NY)
 {
 	int j = blockIdx.x * blockDim.x + threadIdx.x;
 	
@@ -91,7 +91,7 @@ __global__ void atax_kernel2(DATA_TYPE *A, DATA_TYPE *y, DATA_TYPE *tmp)
 }
 
 
-void ataxGpu(DATA_TYPE* A_gpu, DATA_TYPE* x_gpu, DATA_TYPE* y_gpu, DATA_TYPE* tmp_gpu, DATA_TYPE* y_outputFromGpu)
+void ataxGpu(DATA_TYPE* A_gpu, DATA_TYPE* x_gpu, DATA_TYPE* y_gpu, DATA_TYPE* tmp_gpu, DATA_TYPE* y_outputFromGpu, int NX, int NY)
 {
   cudaEvent_t start, end;
   float time;
@@ -99,26 +99,26 @@ void ataxGpu(DATA_TYPE* A_gpu, DATA_TYPE* x_gpu, DATA_TYPE* y_gpu, DATA_TYPE* tm
 	dim3 grid1((size_t)(ceil( ((float)NX) / ((float)block.x) )), 1);
 	dim3 grid2((size_t)(ceil( ((float)NY) / ((float)block.x) )), 1);
 
-  double t_start, t_end;
+  //double t_start, t_end;
 
 
-  //cudaEventCreate(&start);
-  //cudaEventCreate(&end);
-  //cudaEventRecord(start);
+  cudaEventCreate(&start);
+  cudaEventCreate(&end);
+  cudaEventRecord(start);
 
-  t_start = rtclock();
-	atax_kernel1<<< grid1, block >>>(A_gpu,x_gpu,tmp_gpu);
+  //t_start = rtclock();
+	atax_kernel1<<< grid1, block >>>(A_gpu,x_gpu,tmp_gpu, NX, NY);
   cudaDeviceSynchronize();
-	atax_kernel2<<< grid2, block >>>(A_gpu,y_gpu,tmp_gpu);
+	atax_kernel2<<< grid2, block >>>(A_gpu,y_gpu,tmp_gpu, NX, NY);
   cudaDeviceSynchronize();
-  t_end = rtclock();
-	fprintf(stdout, "%0.6lfs\n", t_end - t_start);
+  //t_end = rtclock();
+	//fprintf(stdout, "%0.6lfs\n", t_end - t_start);
 
-  //cudaEventRecord(end);
-  //cudaEventSynchronize(end);
-  //cudaEventElapsedTime(&time, start, end);
+  cudaEventRecord(end);
+  cudaEventSynchronize(end);
+  cudaEventElapsedTime(&time, start, end);
 
-  //fprintf(stdout, "%0.6lf\n", time);
+  fprintf(stdout, "%0.6lf\n", time);
 
 	
 	cudaMemcpy(y_outputFromGpu, y_gpu, sizeof(DATA_TYPE) * NX, cudaMemcpyDeviceToHost);
@@ -144,20 +144,18 @@ int main(int argc, char** argv)
 	cudaMallocManaged(&A, NX*NY*sizeof(DATA_TYPE));
 	cudaMallocManaged(&x, NY*sizeof(DATA_TYPE));
 	cudaMallocManaged(&y, NY*sizeof(DATA_TYPE));
-	y_outputFromGpu = (DATA_TYPE*)malloc(NY*sizeof(DATA_TYPE));
-	tmp = (DATA_TYPE*)malloc(NX*sizeof(DATA_TYPE));
+	cudaMallocManaged(&y_outputFromGpu, NY*sizeof(DATA_TYPE));
+  cudaMallocManaged(&tmp, NX*sizeof(DATA_TYPE));
 
-	init_array(x, A);
+	init_array(x, A, NX, NY);
 
 	GPU_argv_init();
-	ataxGpu(A, x, y, tmp, y_outputFromGpu);
+	ataxGpu(A, x, y, tmp, y_outputFromGpu, NX, NY);
 	
 
 	cudaFree(A);
 	cudaFree(x);
 	cudaFree(y);
-	free(y_outputFromGpu);
-	free(tmp);
 
   	return 0;
 }
