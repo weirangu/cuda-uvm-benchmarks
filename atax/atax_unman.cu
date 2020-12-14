@@ -93,12 +93,22 @@ __global__ void atax_kernel2(DATA_TYPE *A, DATA_TYPE *y, DATA_TYPE *tmp, int NX,
 
 void ataxGpu(DATA_TYPE* A, DATA_TYPE* x, DATA_TYPE* y, DATA_TYPE* tmp, DATA_TYPE* y_outputFromGpu, int NX, int NY)
 {
-	double t_start, t_end;
+	//double t_start, t_end;
 
+  cudaEvent_t start, end;
+  float time;
 	DATA_TYPE *A_gpu;
 	DATA_TYPE *x_gpu;
 	DATA_TYPE *y_gpu;
 	DATA_TYPE *tmp_gpu;
+
+	dim3 block(DIM_THREAD_BLOCK_X, DIM_THREAD_BLOCK_Y);
+	dim3 grid1((size_t)(ceil( ((float)NX) / ((float)block.x) )), 1);
+	dim3 grid2((size_t)(ceil( ((float)NY) / ((float)block.x) )), 1);
+
+  cudaEventCreate(&start);
+  cudaEventCreate(&end);
+  cudaEventRecord(start);
 
 	cudaMalloc((void **)&A_gpu, sizeof(DATA_TYPE) * NX * NY);
 	cudaMalloc((void **)&x_gpu, sizeof(DATA_TYPE) * NY);
@@ -110,17 +120,21 @@ void ataxGpu(DATA_TYPE* A, DATA_TYPE* x, DATA_TYPE* y, DATA_TYPE* tmp, DATA_TYPE
 	cudaMemcpy(y_gpu, y, sizeof(DATA_TYPE) * NY, cudaMemcpyHostToDevice);
 	cudaMemcpy(tmp_gpu, tmp, sizeof(DATA_TYPE) * NX, cudaMemcpyHostToDevice);
 	
-	dim3 block(DIM_THREAD_BLOCK_X, DIM_THREAD_BLOCK_Y);
-	dim3 grid1((size_t)(ceil( ((float)NX) / ((float)block.x) )), 1);
-	dim3 grid2((size_t)(ceil( ((float)NY) / ((float)block.x) )), 1);
 
-	t_start = rtclock();
+	//t_start = rtclock();
 	atax_kernel1<<< grid1, block >>>(A_gpu,x_gpu,tmp_gpu, NX, NY);
   cudaDeviceSynchronize();
 	atax_kernel2<<< grid2, block >>>(A_gpu,y_gpu,tmp_gpu, NX, NY);
   cudaDeviceSynchronize();
-	t_end = rtclock();
-	fprintf(stdout, "%0.6lfs\n", t_end - t_start);
+	//t_end = rtclock();
+	//fprintf(stdout, "%0.6lfs\n", t_end - t_start);
+
+  cudaEventRecord(end);
+  cudaEventSynchronize(end);
+  cudaEventElapsedTime(&time, start, end);
+
+  fprintf(stdout, "%0.6lf\n", time);
+
 	
 	cudaMemcpy(y_outputFromGpu, y_gpu, sizeof(DATA_TYPE) * NX, cudaMemcpyDeviceToHost);
 

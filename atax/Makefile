@@ -1,5 +1,6 @@
 #!/usr/bin/make
 
+all: atax_man atax_unman
 
 atax_man: atax_man.cu
 		nvcc -g -Wno-deprecated-gpu-targets atax_man.cu -lcudart -o atax_man
