@@ -77,10 +77,9 @@ void reduce_cuda(int num_dims, int num_arr)
 	double *sum_gpu;
 	cudaMalloc(&arr_gpu, total_size);
 	cudaMalloc(&sum_gpu, sizeof(double) * num_dims);
+	cudaEventRecord(start);
 	cudaMemcpy(arr_gpu, arr, total_size, cudaMemcpyHostToDevice);
 	cudaMemset(sum_gpu, 0, sizeof(double) * num_dims);
-
-	cudaEventRecord(start);
 	reduce_kernel<<<grid, 512, sizeof(double) * 512>>>(arr_gpu, sum_gpu, num_arr);
 	cudaEventRecord(end);
 
